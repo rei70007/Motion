@@ -12,12 +12,11 @@
   }
 
   async function start() {
-    if (!window.DeviceOrientationEvent) {
+    if (!('DeviceOrientationEvent' in window)) {
       error = 'Device orientation not supported';
       return;
     }
 
-    // iOS 13+ (Safari und Chrome auf iPhone)
     if (typeof DeviceOrientationEvent.requestPermission === 'function') {
       try {
         const state = await DeviceOrientationEvent.requestPermission();
@@ -31,9 +30,14 @@
       }
     }
 
-    window.addEventListener('deviceorientation', handleOrientation);
     started = true;
   }
+
+  $effect(() => {
+    if (!started) return;
+    window.addEventListener('deviceorientation', handleOrientation);
+    return () => window.removeEventListener('deviceorientation', handleOrientation);
+  });
 </script>
 
 <h1>Device Orientation</h1>
@@ -42,7 +46,9 @@
   <button onclick={start}>Sensor starten</button>
 {/if}
 
-{#if error}<p style="color:red">{error}</p>{/if}
+{#if error}
+  <p style="color: red">{error}</p>
+{/if}
 
 <p>Alpha: {alpha.toFixed(1)}</p>
 <p>Beta: {beta.toFixed(1)}</p>
